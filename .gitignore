@@ -1,0 +1,5 @@
+env
+.env
+.space
+project_desc.txt
+*.swp
