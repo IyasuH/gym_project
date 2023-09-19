@@ -36,7 +36,7 @@ todayNow = datetime.datetime.now()
 gym_users = []
 
 START_MSG = """ Hello 
-    Welcome to the GYM 
+    Welcome to the <b>GYM </b>
 """
 
 class TelegramWebhook(BaseModel):
@@ -53,7 +53,7 @@ class TelegramWebhook(BaseModel):
     poll: Optional[dict]
     poll_answer: Optional[dict]
 
-def start(update: Update):
+def start(update, context):
     """When start button touched
     
     Keyword arguments:
