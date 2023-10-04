@@ -29,7 +29,20 @@ app = FastAPI()
 deta = Deta(DETA_KEY)
 
 user_db = deta.Base("User_DB") # detail user info()
-logg_db = deta.Base("Logg_DB") # exrecise logg
+logg_db = deta.Base("Log_DB") # exrecise logg
+waiting_db = deta.Base("Waiting_DB") # waiting for approval list
+
+
+def load_admin():
+    """to load admins with their ids"""
+    admin_db = deta.Base("Admin_DB")
+    admins = admin_db.fetch().items
+    admins_db_ids = []
+    for admin in admins:
+        admins_db_ids.append(admin["admin_id"])
+    return admins_db_ids
+
+admins_id_list = load_admin()
 
 todayNow = datetime.datetime.now()
 
@@ -153,8 +166,71 @@ def record_log(update, context):
     update.message.reply_html("<b>Logg is added</b>")
 
 
+def see_waiting_list(update, context):
+    """list out waiting list  """
+    effective_user = update.effective_user
+    if effective_user.id not in admins_id_list:
+        update.message.reply_text(text="I don't get it")
+        return
+    waiting_list = waiting_db.fetch({"approved":False}).items
+    if waiting_list == []:
+        update.message.reply_text("no one is in waiting list")
+        return
+    for waiting in waiting_list:
+        update.message.reply_text("user_name: "+waiting["user_name"]+"user_id"+waiting["user_id"]+"first_name"+waiting["first_name"]+"\n requested at"+waiting["requested_at"])
+
+
+def is_approved():
+    """to check single user id is approved or not"""
+
+def aprove_user(update, context):
+    """to give aproval to users"""
+    effective_user = update.effective_user
+    if effective_user.id not in admins_id_list:
+        update.message.reply_text(text="I don't get it")
+        return
+    user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '')
+    waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items
+
+    user_name = waiting_user["user_name"]
+    first_name = waiting_user["first_name"]
+    last_name = waiting_user["last_name"]
+
+    user_info_dict = {}
+
+    user_info_dict["full_name"] = ""
+    user_info_dict["dob"] = ""
+    user_info_dict["gender"]= ""
+    user_info_dict["height"]= 0.0
+    user_info_dict["weight"]= 0.0
+    user_info_dict["main_goal"]=""
+    user_info_dict["entry_date"]=""
+    user_info_dict["created_at"]=datetime.date.today().strftime("%d/%m/%Y")
+    user_info_dict["updated_at"]=datetime.date.today().strftime("%d/%m/%Y")
+    user_info_dict["first_name"]=first_name
+    user_info_dict["last_name"]=last_name
+    user_info_dict["user_name"]=user_name
+    user_info_dict["key"] =user_id
+    user_info_dict["user_id"]=user_id
+
+    user_info_dict["fat_percent"] = ""
+    user_info_dict["waist_circumference"] = ""
+    user_info_dict["hip_circumference"] = ""
+    user_info_dict["calf_circumference"] = ""
+    user_info_dict["chest_width"] = ""
+    user_info_dict["shoulder_width"] = ""
+    user_info_dict["bicep_circumference"] = ""
+
+    user_db.put(user_info_dict)
+
+    waiting_info_dict = {"approved":True}
+    waiting_db.update(waiting_info_dict, user_id)
+
+
 def register_fun_handlers(dispatcher):
     dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(CommandHandler('aprove_user', aprove_user))
+    dispatcher.add_handler(CommandHandler('see_waiting_list', see_waiting_list))
 
 def main():
     updater = Updater(TOKEN, use_context=True)
