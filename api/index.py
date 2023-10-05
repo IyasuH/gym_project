@@ -169,6 +169,8 @@ def record_log(update, context):
 def see_waiting_list(update, context):
     """list out waiting list  """
     effective_user = update.effective_user
+    print("The effective user id is: ", effective_user.id)
+    print("The admins id list is: ", admins_id_list)
     if effective_user.id not in admins_id_list:
         update.message.reply_text(text="I don't get it")
         return
@@ -192,6 +194,8 @@ def aprove_user(update, context):
         update.message.reply_text(text="I don't get it")
         return
     user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '')
+    # if user_id is not in waiting db or if user_id is already in user_db i have to check 
+    # if user_id in 
     waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items
 
     user_name = waiting_user["user_name"]
