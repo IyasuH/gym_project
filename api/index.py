@@ -197,7 +197,7 @@ def see_waiting_list(update, context):
         update.message.reply_text("no one is in waiting list")
         return
     for waiting in waiting_list:
-        update.message.reply_text("user_name: "+waiting["user_name"]+"\nuser_id"+waiting["user_id"]+"\nfirst_name"+waiting["first_name"]+"\nrequested at"+waiting["requested_at"])
+        update.message.reply_text("user_name: "+waiting["user_name"]+"\nuser_id: "+waiting["user_id"]+"\nfirst_name: "+waiting["first_name"]+"\nrequested at: "+waiting["requested_at"])
 
 
 def is_approved():
