@@ -221,7 +221,7 @@ def show_exe_log(update, context):
         return
     # this will load all the data 
     user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '').replace("]", '')
-    log = logg_db.fetch({"user_Id":user_id}).items[0]
+    log = logg_db.fetch({"user_Id":user_id}).items
     update.message.reply_text("User id: "+log["user_id"]+"\nBody Area: "+log["body_area"]+"\nDate worked: "+log["date_worked"]+"\nEquipment used: "+log["equipment_used"]+"\nExercise name: "+log["exercise_name"]+"\nDuration: "+log["exercise_duration"]+"\nAdditional info: "+log["additional_info"])
 
 
@@ -234,7 +234,7 @@ def show_personal(update, context):
         update.message.reply_text(text="I don't get it")
         return
     user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '').replace("]", '')
-    user = user_db.fetch({"user_Id":user_id}).items[0]
+    user = user_db.fetch({"user_Id":user_id}).items
     update.message.reply_text("user_name: "+user["user_name"]+"\nuser_id: "+user["user_id"]+"\nfirst_name: "+user["first_name"]+"\nentry_date: " +user["entry_date"]+"\nWeight: "+user["weight"]+"\nHeight: "+user["height"]+"\nmain goal: "+user["main_goal"]+"\ndbb"+user["dob"]+"\nfat_percent"+user["fat_percent"])
 
 def show_change():
@@ -261,7 +261,7 @@ def aprove_user(update, context):
     if str(user_id) not in waiting_id_list or str(user_id) in user_id_list:
         update.message.reply_text(text="user id not found in waiting list or it is already in user db")
         return 
-    waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items[0]
+    waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items
 
     user_name = waiting_user["user_name"]
     first_name = waiting_user["first_name"]
