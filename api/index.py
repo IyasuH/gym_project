@@ -44,6 +44,24 @@ def load_admin():
 
 admins_id_list = load_admin()
 
+def load_waiting():
+    waiting_list = waiting_db.fetch({"approved":False}).items
+    waiting_db_ids = []
+    for waiting in waiting_list:
+        waiting_db_ids.append(waiting["user_id"])
+    return waiting_db_ids
+
+waiting_id_list = load_waiting()
+
+def load_user():
+    users = user_db.fetch().items
+    users_db_ids =[]
+    for user in users:
+        users_db_ids.append(user["user_id"])
+    return users_db_ids
+
+user_id_list = load_user()
+
 todayNow = datetime.datetime.now()
 
 gym_users = []
@@ -179,7 +197,7 @@ def see_waiting_list(update, context):
         update.message.reply_text("no one is in waiting list")
         return
     for waiting in waiting_list:
-        update.message.reply_text("user_name: "+waiting["user_name"]+"user_id"+waiting["user_id"]+"first_name"+waiting["first_name"]+"\n requested at"+waiting["requested_at"])
+        update.message.reply_text("user_name: "+waiting["user_name"]+"\nuser_id"+waiting["user_id"]+"\nfirst_name"+waiting["first_name"]+"\nrequested at"+waiting["requested_at"])
 
 
 def is_approved():
@@ -196,6 +214,9 @@ def aprove_user(update, context):
     user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '')
     # if user_id is not in waiting db or if user_id is already in user_db i have to check 
     # if user_id in 
+    if str(user_id) not in waiting_id_list or str(user_id) in user_id_list:
+        update.message.reply_text(text="user id not found in waiting list or it is in user db")
+        return 
     waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items
 
     user_name = waiting_user["user_name"]
