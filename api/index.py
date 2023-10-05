@@ -199,6 +199,37 @@ def see_waiting_list(update, context):
     for waiting in waiting_list:
         update.message.reply_text("user_name: "+waiting["user_name"]+"\nuser_id: "+waiting["user_id"]+"\nfirst_name: "+waiting["first_name"]+"\nrequested at: "+waiting["requested_at"])
 
+def list_users(update, context):
+    """
+    to list all users with basic info
+    """
+    all_users = user_db.fetch().items
+    for user in all_users:
+        update.message.reply_text("user_name: "+user["user_name"]+"\nuser_id: "+user["user_id"]+"\nfirst_name: "+user["first_name"]+"\nentry_date: " +user["entry_date"])
+
+def show_exe_log(update, context):
+    """
+    to show exe log for single person
+    """
+    # this will load all the data 
+    user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '').replace("]", '')
+    log = logg_db.fetch({"user_Id":user_id}).items[0]
+    update.message.reply_text("User id: "+log["user_id"]+"\nBody Area: "+log["body_area"]+"\nDate worked: "+log["date_worked"]+"\nEquipment used: "+log["equipment_used"]+"\nExercise name: "+log["exercise_name"]+"\nDuration: "+log["exercise_duration"]+"\nAdditional info: "+log["additional_info"])
+
+
+def show_personal(update, context):
+    """
+    to show personal info detail about single person
+    """
+    user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '').replace("]", '')
+    user = user_db.fetch({"user_Id":user_id}).items[0]
+    update.message.reply_text("user_name: "+user["user_name"]+"\nuser_id: "+user["user_id"]+"\nfirst_name: "+user["first_name"]+"\nentry_date: " +user["entry_date"]+"\nWeight: "+user["weight"]+"\nHeight: "+user["height"]+"\nmain goal: "+user["main_goal"]+"\ndbb"+user["dob"]+"\nfat_percent"+user["fat_percent"])
+
+def show_change():
+    """
+    to see changes about one person
+    """
+
 
 def is_approved():
     """to check single user id is approved or not"""
@@ -211,14 +242,14 @@ def aprove_user(update, context):
     if str(effective_user.id) not in admins_id_list:
         update.message.reply_text(text="I don't get it")
         return
-    user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '')
+    user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '').replace("]", '')
     print("user id: ", user_id)
     # if user_id is not in waiting db or if user_id is already in user_db i have to check 
     # if user_id in 
     if str(user_id) not in waiting_id_list or str(user_id) in user_id_list:
         update.message.reply_text(text="user id not found in waiting list or it is already in user db")
         return 
-    waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items
+    waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items[0]
 
     user_name = waiting_user["user_name"]
     first_name = waiting_user["first_name"]
