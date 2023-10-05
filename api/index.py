@@ -186,6 +186,8 @@ def is_approved():
 def aprove_user(update, context):
     """to give aproval to users"""
     effective_user = update.effective_user
+    print("The effective user id is: ", effective_user.id)
+    print("The admins id list is: ", admins_id_list)
     if effective_user.id not in admins_id_list:
         update.message.reply_text(text="I don't get it")
         return
