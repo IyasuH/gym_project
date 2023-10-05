@@ -212,10 +212,11 @@ def aprove_user(update, context):
         update.message.reply_text(text="I don't get it")
         return
     user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '')
+    print("user id: ", user_id)
     # if user_id is not in waiting db or if user_id is already in user_db i have to check 
     # if user_id in 
     if str(user_id) not in waiting_id_list or str(user_id) in user_id_list:
-        update.message.reply_text(text="user id not found in waiting list or it is in user db")
+        update.message.reply_text(text="user id not found in waiting list or it is already in user db")
         return 
     waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items
 
@@ -251,7 +252,10 @@ def aprove_user(update, context):
     user_db.put(user_info_dict)
 
     waiting_info_dict = {"approved":True}
+    
     waiting_db.update(waiting_info_dict, user_id)
+
+    update.message.reply_text(text="user id {} of user name {} is added to user db successfully.".format(user_id, user_name))
 
 
 def register_fun_handlers(dispatcher):
