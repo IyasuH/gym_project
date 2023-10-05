@@ -168,10 +168,10 @@ def record_log(update, context):
 
 def see_waiting_list(update, context):
     """list out waiting list  """
-    effective_user = str(update.effective_user)
+    effective_user = update.effective_user
     print("The effective user id is: ", effective_user.id)
     print("The admins id list is: ", admins_id_list)
-    if effective_user.id not in admins_id_list:
+    if str(effective_user.id) not in admins_id_list:
         update.message.reply_text(text="I don't get it")
         return
     waiting_list = waiting_db.fetch({"approved":False}).items
@@ -187,10 +187,10 @@ def is_approved():
 
 def aprove_user(update, context):
     """to give aproval to users"""
-    effective_user = str(update.effective_user)
+    effective_user = update.effective_user
     print("The effective user id is: ", effective_user.id)
     print("The admins id list is: ", admins_id_list)
-    if effective_user.id not in admins_id_list:
+    if str(effective_user.id) not in admins_id_list:
         update.message.reply_text(text="I don't get it")
         return
     user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '')
