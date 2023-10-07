@@ -65,6 +65,24 @@ Use the <a href="http://t.me/deregymbot/gymup">WepApp</a> for full exprience
 
 """
 
+admin_help_msg="""
+use<b><code>/approve_user</code></b>
+Followed by <b>user_id</b> to approve user
+
+use<b><code>/see_waiting_list</code></b>
+To see waiting users list
+
+use<b><code>/list_users</code></b>
+To List users with their basic information
+
+use<b><code>/show_exe_log</code></b>
+Followed by <b>user_id</b> to show exercise log of user
+
+use<b><code>/show_personal</code></b>
+Followed by <b>user_id</b> to see about personal user
+"""
+
+
 class TelegramWebhook(BaseModel):
     update_id: int
     message: Optional[dict]
@@ -246,6 +264,16 @@ def aprove_user(update, context):
         user id {user_id} of user name {user_name} is added to user db successfully.
     """)
 
+def admin_help(update, context):
+    """
+    This is Admin help(only for admin)
+    """
+    effective_user = update.effective_user
+    if str(effective_user.id) not in admins_id_list:
+        update.message.reply_text(text="I don't get it")
+        return
+    update.message.reply_html(text=admin_help_msg)
+    
 
 def register_fun_handlers(dispatcher):
     dispatcher.add_handler(CommandHandler('start', start))
@@ -254,6 +282,7 @@ def register_fun_handlers(dispatcher):
     dispatcher.add_handler(CommandHandler('list_users', list_users))
     dispatcher.add_handler(CommandHandler('show_exe_log', show_exe_log))
     dispatcher.add_handler(CommandHandler('show_personal', show_personal))
+    dispatcher.add_handler(CommandHandler('admin_help', admin_help))
 
 def main():
     updater = Updater(TOKEN, use_context=True)
