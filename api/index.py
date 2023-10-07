@@ -80,7 +80,7 @@ class TelegramWebhook(BaseModel):
     poll_answer: Optional[dict]
 
 
-def start(update):
+def start(update, context):
     """
     When start button touched
     """
@@ -89,7 +89,7 @@ def start(update):
     update.message.reply_html(text=START_MSG.format(name=first_name, user_id=user.id))
 
 
-def see_waiting_list(update):
+def see_waiting_list(update, context):
     """
     to list out waiting users lists
     """
@@ -109,7 +109,7 @@ def see_waiting_list(update):
         # update.message.reply_text("user_name: "+waiting["user_name"]+"\nuser_id: "+waiting["user_id"]+"\nfirst_name: "+waiting["first_name"]+"\nrequested at: "+waiting["requested_at"])
 
 
-def list_users(update):
+def list_users(update, context):
     """
     to list all users with their basic info
     """
