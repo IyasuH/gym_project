@@ -1,16 +1,14 @@
 import os
 from dotenv import load_dotenv
-import time
 import datetime
 
 import logging
 
 from typing import Optional
 from fastapi import FastAPI
-import telegram
 from pydantic import BaseModel
 from telegram import Update, Bot
-from telegram.ext import CommandHandler, MessageHandler, Updater, Filters, Dispatcher, CallbackContext
+from telegram.ext import CommandHandler, Updater,  Dispatcher
 from deta import Deta
 
 load_dotenv()
@@ -37,37 +35,34 @@ def load_admin():
     """to load admins with their ids"""
     admin_db = deta.Base("Admin_DB")
     admins = admin_db.fetch().items
-    admins_db_ids = []
-    for admin in admins:
-        admins_db_ids.append(admin["admin_id"])
+    admins_db_ids = [admin["admin_id"] for admin in admins]
     return admins_db_ids
 
 admins_id_list = load_admin()
 
 def load_waiting():
     waiting_list = waiting_db.fetch({"approved":False}).items
-    waiting_db_ids = []
-    for waiting in waiting_list:
-        waiting_db_ids.append(waiting["user_id"])
+    waiting_db_ids = [waiting["user_id"] for waiting in waiting_list]
     return waiting_db_ids
 
 waiting_id_list = load_waiting()
 
 def load_user():
     users = user_db.fetch().items
-    users_db_ids =[]
-    for user in users:
-        users_db_ids.append(user["user_id"])
+    users_db_ids =[user["user_id"] for user in users]
     return users_db_ids
 
 user_id_list = load_user()
 
 todayNow = datetime.datetime.now()
 
-gym_users = []
+START_MSG = """
+Hi 👋 <a href="tg://user?id={user_id}">{name}</a>
 
-START_MSG = """ Hello 
-    Welcome to the <b>GYM </b>
+Welcome to the <b>Dere Gym</b>
+
+Use the <a href="http://t.me/deregymbot/gymup">WepApp</a> for full exprience
+
 """
 
 class TelegramWebhook(BaseModel):
@@ -84,111 +79,21 @@ class TelegramWebhook(BaseModel):
     poll: Optional[dict]
     poll_answer: Optional[dict]
 
-def start(update, context):
-    """When start button touched
-    
-    Keyword arguments:
-    update --
-    context -- 
-    Return: 
+
+def start(update):
+    """
+    When start button touched
     """
     user = update.effective_user or update.effectuve_chat
+    first_name = getattr(user, "first_name", '')
+    update.message.reply_html(text=START_MSG.format(name=first_name, user_id=user.id))
 
-    update.message.reply_html(text=START_MSG)
 
-def record_user_data(update, context):
+def see_waiting_list(update):
     """
-    here the key for the row will be the telegram_id
-    to record personal data for saved users(users that are already in the database)
-    so basically the process is updating not inserting into database
+    to list out waiting users lists
     """
-    # so first let check wheter user is the database or ont
     effective_user = update.effective_user
-    if effective_user.id not in gym_users:
-        """
-        user is not actually gym user
-        """
-        update.message.reply_html(text="I don't think you are a user")
-        return
-    gym_user = effective_user
-    info_raw = str(context.args[0:])
-    # first to check the output let's print it
-    print(info_raw)
-    info_ = info_raw.split(",")
-
-    info_full_name =  info_[0].replace("[", '').replace("'", '')
-    info_age = info_[1].replace("'", '')
-    info_gender = info_[2].replace("'", '')
-    info_height = info_[3].replace("'", '')
-    info_weight = info_[4].replace("'", '')
-    info_specific_goal = info_[5].replace("'",'')
-    info_entry_date = info_[6].replace("]",'').replace("'",'')
-    
-    # assuming this data is already saved in the table
-    gymUserName = getattr(gym_user, "user_name", '')
-    gymFirstName = getattr(gym_user, "first_name", '')
-    gymLastName = getattr(gym_user, "last_name", '')
-    gymKey = getattr(gym_user, "key", '') # since 
-    updatedAt = todayNow
-
-    user_info_dict = {}
-    user_info_dict["full_name"] = info_full_name
-    user_info_dict["age"] = info_age
-    user_info_dict["gender"] = info_gender
-    user_info_dict["height"] = info_height
-    user_info_dict["weight"] = info_weight
-    user_info_dict["goal"] = info_specific_goal
-    user_info_dict["entry_date"] = info_entry_date
-    user_info_dict["updated_at"] = updatedAt
-    user_info_dict["first_name"] = gymFirstName
-    user_info_dict["last_name"] = gymLastName
-    user_info_dict["username"] = gymUserName
-    user_info_dict["telegram_id"] = gymKey # since i use telegram user_id is used as key for the row
-
-    user_db.put(user_info_dict)
-    update.message.reply_html("<b>User Info</b> is updated scuessfully")
-
-def record_log(update, context):
-    """
-    to record exercise log for user
-    """    
-    effective_user = update.effective_user
-    if effective_user.id not in gym_users:
-        """
-        user is not actually gym user
-        """
-        update.message.reply_html(text="I don't think you are a user")
-        return
-    gym_user = effective_user
-    log_data = str(context.args[0:])
-
-    logg_ = log_data.split(",")
-    body_area = logg_[0].replace("[", '').replace(",",'')
-    exercise_name = logg_[1].replace(",",'')
-    equipment_used = logg_[2].replace(",",'') # 4kg dumbbell
-    reps_number = logg_[3].replace(",", '') # 8 reps, or 2 minute
-    tot_cycle = logg_[4].replace(",",'') # 3 times
-    date_worked = logg_[5].replace(",",'') #
-
-    user_id = logg_[6].replace(",",'') # here user_id should be
-
-    logg_info_dict = {}
-    logg_info_dict["body_area"] = body_area
-    logg_info_dict["exercise_name"] = exercise_name
-    logg_info_dict["equipment_used"] = equipment_used
-    logg_info_dict["reps_number"] = reps_number
-    logg_info_dict["tot_cycle"] = tot_cycle
-    logg_info_dict["date_worked"] = date_worked
-
-    logg_db.put(logg_info_dict)
-    update.message.reply_html("<b>Logg is added</b>")
-
-
-def see_waiting_list(update, context):
-    """list out waiting list  """
-    effective_user = update.effective_user
-    print("The effective user id is: ", effective_user.id)
-    print("The admins id list is: ", admins_id_list)
     if str(effective_user.id) not in admins_id_list:
         update.message.reply_text(text="I don't get it")
         return
@@ -197,11 +102,16 @@ def see_waiting_list(update, context):
         update.message.reply_text("no one is in waiting list")
         return
     for waiting in waiting_list:
-        update.message.reply_text("user_name: "+waiting["user_name"]+"\nuser_id: "+waiting["user_id"]+"\nfirst_name: "+waiting["first_name"]+"\nrequested at: "+waiting["requested_at"])
+        update.message.reply_text(f"""user name: {waiting['user_name']}
+                                  user id: {waiting['user_id']}
+                                  first name: {waiting['first_name']}
+                                  requested at: {waiting['requested_at']}""")
+        # update.message.reply_text("user_name: "+waiting["user_name"]+"\nuser_id: "+waiting["user_id"]+"\nfirst_name: "+waiting["first_name"]+"\nrequested at: "+waiting["requested_at"])
 
-def list_users(update, context):
+
+def list_users(update):
     """
-    to list all users with basic info
+    to list all users with their basic info
     """
     effective_user = update.effective_user
     if str(effective_user.id) not in admins_id_list:
@@ -209,11 +119,16 @@ def list_users(update, context):
         return
     all_users = user_db.fetch().items
     for user in all_users:
-        update.message.reply_text("user_name: "+user["user_name"]+"\nuser_id: "+user["user_id"]+"\nfirst_name: "+user["first_name"]+"\nentry_date: " +user["entry_date"])
+        update.message.reply_text(f"""user name: {user['user_name']}
+                                  user id: {user['user_id']}
+                                  first name: {user['first_name']}
+                                  entry date: {user['entry_date']}""")
+        # update.message.reply_text("user_name: "+user["user_name"]+"\nuser_id: "+user["user_id"]+"\nfirst_name: "+user["first_name"]+"\nentry_date: " +user["entry_date"])
+
 
 def show_exe_log(update, context):
     """
-    to show exe log for single person
+    to show exercise log for single person
     """
     effective_user = update.effective_user
     if str(effective_user.id) not in admins_id_list:
@@ -221,12 +136,19 @@ def show_exe_log(update, context):
         return
     # this will load all the data 
     user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '').replace("]", '')
-    print("user_id: ", user_id)
     # the entire log for one perons
     logs = logg_db.fetch({"user_id":user_id}).items
     for log in logs:
         print("log: ", log)
-        update.message.reply_text("User id: "+log["user_id"]+"\nBody Area: "+log["body_area"]+"\nDate worked: "+log["date_worked"]+"\nEquipment used: "+log["equipment_used"]+"\nExercise name: "+log["exercise_name"]+"\nDuration: "+log["exercise_duration"]+"\nAdditional info: "+log["additional_info"])
+        update.message.reply_text(f"""User id: {log['user_id']}
+                                  Body Area: {log['body_area']}
+                                  Date worked: {log['date_worked']}
+                                  Equipment used: {log['equipment_used']}
+                                  Exercise name: {log['exercise_name']}
+                                  Duration: {log['exercise_duration']}
+                                  Additional info: {log['additional_info']}
+        """)
+        # update.message.reply_text("User id: "+log["user_id"]+"\nBody Area: "+log['body_area']+"\nDate worked: "+log['date_worked']+"\nEquipment used: "+log['equipment_used']+"\nExercise name: "+log['exercise_name']+"\nDuration: "+log['exercise_duration']+"\nAdditional info: "+log['additional_info'])
 
 
 def show_personal(update, context):
@@ -239,23 +161,38 @@ def show_personal(update, context):
         return
     user_id = str(context.args[0:]).split(",")[0].replace("[",'').replace("'", '').replace("]", '')
     user = user_db.fetch({"user_id":user_id}).items[0]
-    print("user: ", user)
-    update.message.reply_text("user_name: "+user["user_name"]+"\nuser_id: "+user["user_id"]+"\nfirst_name: "+user["first_name"]+"\nentry_date: " +user["entry_date"]+"\nWeight: "+user["weight"]+"\nHeight: "+user["height"]+"\nmain goal: "+user["main_goal"]+"\ndbb"+user["dob"]+"\nfat_percent"+user["fat_percent"])
+    update.message.reply_text(f"""
+        User Name: " {user['user_name']}
+        User Id: {user['user_id']}
+        First Name: {user['first_name']}
+        Entry Date: {user['entry_date']}
+        Weight: {str(user['weight'])}
+        Height: {str(user['height'])}
+        Main goal: {user['main_goal']}
+        DoB: {user['dob']}
+        Fat percent: {str(user['fat_percent'])}
+        Waist Circumference: {str(user['waist_circumference'])}
+        Hip Circumference: {str(user['hip_circumference'])}
+        Calf Circumference: {str(user['calf_circumference'])}
+        Chest Width: {str(user['chest_width'])}
+        Shoulder Width: {str(user['shoulder_width'])}
+        Bicep Circumference: {str(user['bicep_circumference'])}
+    """
+    )
+    # update.message.reply_text("User Name: "+user['user_name']+"\nUser Id: "+user['user_id']+"\nFirst Name: "+user['first_name']+"\nEntry Date: " +
+    #                           user['entry_date']+"\nWeight: "+str(user['weight'])+"\nHeight: "+str(user['height'])+"\nMain goal: "+user['main_goal']+"\nDoB: "
+    #                           +user['dob']+"\nFat percent: "+str(user['fat_percent'])+"\nWaist Circumference: "+str(user['waist_circumference'])+"\nHip Circumference: "
+    #                           +str(user['hip_circumference'])+"\nCalf Circumference: "+str(user['calf_circumference'])+"\nChest Width: "+str(user['chest_width'])+
+    #                           "\nShoulder Width: "+str(user['shoulder_width'])+"\nBicep Circumference: "+str(user['bicep_circumference']))
 
 def show_change():
     """
-    to see changes about one person
+    to see changes info about one person
     """
-
-
-def is_approved():
-    """to check single user id is approved or not"""
 
 def aprove_user(update, context):
     """to give aproval to users"""
     effective_user = update.effective_user
-    print("The effective user id is: ", effective_user.id)
-    print("The admins id list is: ", admins_id_list)
     if str(effective_user.id) not in admins_id_list:
         update.message.reply_text(text="I don't get it")
         return
@@ -264,7 +201,9 @@ def aprove_user(update, context):
     # if user_id is not in waiting db or if user_id is already in user_db i have to check 
     # if user_id in 
     if str(user_id) not in waiting_id_list or str(user_id) in user_id_list:
-        update.message.reply_text(text="user id not found in waiting list or it is already in user db")
+        update.message.reply_text(text="""
+                user id not found in waiting list or it is already in user db
+        """)
         return 
     waiting_user = waiting_db.fetch({"approved":False, "user_id": user_id}).items
 
@@ -303,7 +242,9 @@ def aprove_user(update, context):
     
     waiting_db.update(waiting_info_dict, user_id)
 
-    update.message.reply_text(text="user id {} of user name {} is added to user db successfully.".format(user_id, user_name))
+    update.message.reply_text(text=f"""
+        user id {user_id} of user name {user_name} is added to user db successfully.
+    """)
 
 
 def register_fun_handlers(dispatcher):
